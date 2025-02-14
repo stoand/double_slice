@@ -6,7 +6,7 @@ const testing = std.testing;
 /// at startup
 pub fn DoubleSlice(comptime T: type, inner_max_used: u32) type {
     return struct {
-        buffer: []T,
+        buffer: []align(1)T,
         used: u32 = 0,
 
         pub const max_used = inner_max_used;
@@ -164,7 +164,7 @@ pub fn DoubleSlice(comptime T: type, inner_max_used: u32) type {
         pub fn fromBytes(buffer: *[as_bytes_size]u8) @This() {
             var double_slice: @This() = undefined;
             double_slice.used = std.mem.bytesAsValue(u32, buffer[0..@sizeOf(u32)]).*;
-            double_slice.buffer = @constCast(@alignCast(std.mem.bytesAsSlice(T, buffer[@sizeOf(u32)..])));
+            double_slice.buffer = @constCast(std.mem.bytesAsSlice(T, buffer[@sizeOf(u32)..]));
 
             return double_slice;
         }
@@ -182,88 +182,88 @@ pub fn DoubleSlice(comptime T: type, inner_max_used: u32) type {
     };
 }
 
-// test "To and From Bytes" {
-//     var arena = std.heap.ArenaAllocator.init(testing.allocator);
-//     const alloc = arena.allocator();
-//     defer arena.deinit();
+test "To and From Bytes" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    const alloc = arena.allocator();
+    defer arena.deinit();
 
-//     const InitSlice = DoubleSlice(f64, 10);
+    const InitSlice = DoubleSlice(f64, 10);
 
-//     var double_slice = try InitSlice.alloc(alloc);
-//     try double_slice.append(33.0);
-//     try double_slice.append(44.0);
+    var double_slice = try InitSlice.alloc(alloc);
+    try double_slice.append(33.0);
+    try double_slice.append(44.0);
 
-//     const result = InitSlice.fromBytes(@constCast(&double_slice.toBytes()));
+    const result = InitSlice.fromBytes(@constCast(&double_slice.toBytes()));
 
-//     try testing.expectEqual(double_slice.used, result.used);
-//     try testing.expectEqual(33.0, double_slice.buffer[0]);
-//     try testing.expectEqual(44.0, double_slice.buffer[1]);
-// }
+    try testing.expectEqual(double_slice.used, result.used);
+    try testing.expectEqual(33.0, double_slice.buffer[0]);
+    try testing.expectEqual(44.0, double_slice.buffer[1]);
+}
 
-// test "Deletion" {
-//     var arena = std.heap.ArenaAllocator.init(testing.allocator);
-//     const alloc = arena.allocator();
-//     defer arena.deinit();
+test "Deletion" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    const alloc = arena.allocator();
+    defer arena.deinit();
 
-//     // deleting the first item
+    // deleting the first item
 
-//     {
-//         var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
-//         try double_slice.append(0.0);
-//         try double_slice.append(1.0);
-//         try double_slice.append(2.0);
+    {
+        var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
+        try double_slice.append(0.0);
+        try double_slice.append(1.0);
+        try double_slice.append(2.0);
 
-//         _ = double_slice.deleteIndex(0);
+        _ = double_slice.deleteIndex(0);
 
-//         try testing.expectEqual(1.0, double_slice.buffer[0]);
-//         try testing.expectEqual(2.0, double_slice.buffer[1]);
-//         try testing.expectEqual(2, double_slice.used);
-//     }
+        try testing.expectEqual(1.0, double_slice.buffer[0]);
+        try testing.expectEqual(2.0, double_slice.buffer[1]);
+        try testing.expectEqual(2, double_slice.used);
+    }
 
-//     // deleting the last item
+    // deleting the last item
 
-//     {
-//         var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
-//         try double_slice.append(0.0);
-//         try double_slice.append(1.0);
-//         try double_slice.append(2.0);
+    {
+        var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
+        try double_slice.append(0.0);
+        try double_slice.append(1.0);
+        try double_slice.append(2.0);
 
-//         _ = double_slice.deleteIndex(2);
+        _ = double_slice.deleteIndex(2);
 
-//         try testing.expectEqual(0.0, double_slice.buffer[0]);
-//         try testing.expectEqual(1.0, double_slice.buffer[1]);
-//         try testing.expectEqual(2, double_slice.used);
-//     }
+        try testing.expectEqual(0.0, double_slice.buffer[0]);
+        try testing.expectEqual(1.0, double_slice.buffer[1]);
+        try testing.expectEqual(2, double_slice.used);
+    }
 
-//     // does nothing if deletion index is outside of used items
+    // does nothing if deletion index is outside of used items
 
-//     {
-//         var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
-//         try double_slice.append(0.0);
-//         try double_slice.append(1.0);
-//         try double_slice.append(2.0);
+    {
+        var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
+        try double_slice.append(0.0);
+        try double_slice.append(1.0);
+        try double_slice.append(2.0);
 
-//         _ = double_slice.deleteIndex(3);
+        _ = double_slice.deleteIndex(3);
 
-//         try testing.expectEqual(3, double_slice.used);
-//     }
+        try testing.expectEqual(3, double_slice.used);
+    }
 
-//     // deleting a value
+    // deleting a value
 
-//     {
-//         var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
-//         try double_slice.append(0.0);
-//         try double_slice.append(1.0);
-//         try double_slice.append(2.0);
+    {
+        var double_slice = try DoubleSlice(f64, 200).alloc(alloc);
+        try double_slice.append(0.0);
+        try double_slice.append(1.0);
+        try double_slice.append(2.0);
 
-//         const delete_count = double_slice.deleteValue(0.0);
+        const delete_count = double_slice.deleteValue(0.0);
 
-//         try testing.expectEqual(1.0, double_slice.buffer[0]);
-//         try testing.expectEqual(2.0, double_slice.buffer[1]);
-//         try testing.expectEqual(2, double_slice.used);
-//         try testing.expectEqual(1, delete_count);
-//     }
-// }
+        try testing.expectEqual(1.0, double_slice.buffer[0]);
+        try testing.expectEqual(2.0, double_slice.buffer[1]);
+        try testing.expectEqual(2, double_slice.used);
+        try testing.expectEqual(1, delete_count);
+    }
+}
 
 const timeStamp = std.time.milliTimestamp;
 
