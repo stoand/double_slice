@@ -6,7 +6,7 @@ const testing = std.testing;
 /// at startup
 pub fn DoubleSlice(comptime T: type, inner_max_used: u32) type {
     return struct {
-        buffer: []align(1)T,
+        buffer: []align(1) T,
         used: u32 = 0,
 
         pub const max_used = inner_max_used;
@@ -102,8 +102,6 @@ pub fn DoubleSlice(comptime T: type, inner_max_used: u32) type {
         }
 
         pub fn append(self: *@This(), item: T) !void {
-
-            
             if (self.used == max_used) {
                 std.debug.print("DoubleSlice of '{s}' is over its memory limit of {} items\n", .{ @typeName(T), max_used });
                 return error.DoubleSliceOutOfMemory;
@@ -270,13 +268,14 @@ const timeStamp = std.time.milliTimestamp;
 test "bench" {
 
     // std.ArrayList (initCapacity)
-    
+
     {
         var arena = std.heap.ArenaAllocator.init(testing.allocator);
         const alloc = arena.allocator();
         defer arena.deinit();
 
         var list = try std.ArrayList(usize).initCapacity(alloc, 8_000_000);
+        // var list = std.ArrayList(usize).init(alloc);
         defer list.clearAndFree();
 
         const start = timeStamp();
@@ -330,5 +329,3 @@ test "bench" {
         std.debug.print("\n8 Million items appended to std.ArrayList:\n{}ms\n", .{timeStamp() - start});
     }
 }
-
-
