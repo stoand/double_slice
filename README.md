@@ -17,7 +17,7 @@ Startup Time Allocated Lists for Zig
        .version = "1.0.0",
        .paths = .{""},
        .dependencies = .{
-   +       .zbench = .{
+   +       .double_slice = .{
    +           .url = "https://github.com/stoand/double_slice/archive/<COMMIT>.tar.gz",
    +       },
        },
